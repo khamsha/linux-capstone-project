@@ -1,6 +1,6 @@
 #router configuration
 #echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
-echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.conf
+echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.d/99-sysctl.conf
 sudo sysctl -p
 #sudo iptables -I INPUT -i eth0 -p tcp --dport 22 -j ACCEPT
 #sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
@@ -19,11 +19,12 @@ sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 #sudo iptables -t filter -A FORWARD -s 10.129.0.32 -p udp --dport 53 -j ACCEPT
 #sudo iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 #sudo iptables -t filter -P FORWARD DROP
-iptables-save > /etc/iptables.rules
+iptables-save | sudo tee /etc/iptables.rules
 echo "iptables-restore < /etc/iptables.rules" | sudo tee -a /etc/rc.local
 ___________________________
 #nfs host configuration
 sudo -i
+yum update -y
 yum install epel-release -y
 yum install certbot -y
 curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
@@ -53,6 +54,7 @@ certbot certonly --manual --preferred-challenges=dns --email "$EMAIL" --domain "
 
 ___________________________
 #nginx host configuration
+sudo yum update -y
 sudo yum install epel-release -y
 sudo yum install nginx -y
 sudo yum install firewalld -y
