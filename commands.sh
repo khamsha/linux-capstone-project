@@ -1,28 +1,29 @@
-#router configuration
+#router configuration (10.129.0.10)
 #echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
-echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.d/99-sysctl.conf
-sudo sysctl -p
+#echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.d/99-sysctl.conf
+#sudo sysctl -p
+sudo sysctl -w net.ipv4.ip_forward=1
 #sudo iptables -I INPUT -i eth0 -p tcp --dport 22 -j ACCEPT
 #sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 #sudo iptables -A INPUT -i lo -j ACCEPT
 #sudo iptables -P INPUT DROP
-sudo iptables -A PREROUTING -t nat -p tcp -d 10.129.0.6 --dport 80 -j DNAT --to-destination 10.129.0.32:443
-sudo iptables -A PREROUTING -t nat -p tcp -d 10.129.0.6 --dport 443 -j DNAT --to-destination 10.129.0.32:443
+sudo iptables -A PREROUTING -t nat -p tcp -d 10.129.0.10 --dport 80 -j DNAT --to-destination 10.129.0.30:443
+sudo iptables -A PREROUTING -t nat -p tcp -d 10.129.0.10 --dport 443 -j DNAT --to-destination 10.129.0.30:443
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-#sudo iptables -t filter -A FORWARD -d 10.129.0.32 -p tcp --dport 80 -j ACCEPT
-#sudo iptables -t filter -A FORWARD -s 10.129.0.32 -p tcp --dport 80 -j ACCEPT
-#sudo iptables -t filter -A FORWARD -d 10.129.0.32 -p tcp --dport 443 -j ACCEPT
-#sudo iptables -t filter -A FORWARD -s 10.129.0.32 -p tcp --dport 443 -j ACCEPT
-#sudo iptables -t filter -A FORWARD -d 10.129.0.32 -p tcp --dport 53 -j ACCEPT
-#sudo iptables -t filter -A FORWARD -s 10.129.0.32 -p tcp --dport 53 -j ACCEPT
-#sudo iptables -t filter -A FORWARD -d 10.129.0.32 -p udp --dport 53 -j ACCEPT
-#sudo iptables -t filter -A FORWARD -s 10.129.0.32 -p udp --dport 53 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -d 10.129.0.30 -p tcp --dport 80 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -s 10.129.0.30 -p tcp --dport 80 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -d 10.129.0.30 -p tcp --dport 443 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -s 10.129.0.30 -p tcp --dport 443 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -d 10.129.0.30 -p tcp --dport 53 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -s 10.129.0.30 -p tcp --dport 53 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -d 10.129.0.30 -p udp --dport 53 -j ACCEPT
+#sudo iptables -t filter -A FORWARD -s 10.129.0.30 -p udp --dport 53 -j ACCEPT
 #sudo iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 #sudo iptables -t filter -P FORWARD DROP
-iptables-save | sudo tee /etc/iptables.rules
+sudo iptables-save | sudo tee /etc/iptables.rules
 echo "iptables-restore < /etc/iptables.rules" | sudo tee -a /etc/rc.local
 ___________________________
-#nfs host configuration
+#nfs host configuration (10.129.0.20) with sa-otus-dns
 sudo -i
 yum update -y
 yum install epel-release -y
@@ -52,16 +53,19 @@ certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-aut
 
 certbot certonly --manual --preferred-challenges=dns --email "$EMAIL" --domain "$DOMAIN"
 
+#create nfs
+#create a script and download config files from repository to be shares via nfs along with certs
+
 ___________________________
-#nginx host configuration
-sudo yum update -y
-sudo yum install epel-release -y
-sudo yum install nginx -y
-sudo yum install firewalld -y
-sudo systemctl start firewalld
-sudo systemctl enable firewalld
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --reload
-sudo systemctl start nginx
-sudo systemctl enable nginx
+#app host configuration (10.128.0.30, 10.129.0.30, 10.130.0.30) -> use ubuntu with nginx and keycloak
+sudo apt update -y
+sudo apt install nginx default-jdk -y
+wget https://github.com/keycloak/keycloak/releases/download/22.0.5/keycloak-22.0.5.tar.gz
+tar -xzf keycloak-22.0.5.tar.gz
+sudo mkdir /opt/keycloak
+sudo mv keycloak-12.0.4 /opt/keycloak
+sudo useradd --system --shell /sbin/nologin keycloak
+sudo chown -R keycloak: /opt/keycloak
+sudo chmod o+x /opt/keycloak/bin/
+
+#copy from nfs keycloack startup script (env values, create systemd service)
