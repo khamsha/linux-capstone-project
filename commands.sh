@@ -27,7 +27,22 @@ ___________________________
 sudo -i
 yum update -y
 yum install epel-release -y
-yum install certbot -y
+yum install certbot nfs-utils -y
+
+systemctl enable nfs --now
+sudo mkdir /shared/templates
+chown -R nfsnobody:nfsnobody /shared/templates
+
+cat << EOF > /etc/exports
+/shared/templates *(rw,sync,root_squash,no_subtree_check)
+EOF
+
+exportfs -r
+sudo ln -s /shared/templates/certificates /etc/letsencrypt/live
+
+git clone https://github.com/khamsha/linux-capstone-project.git
+sudo ln -s /shared/templates/codefiles ~/linux-capstone-project
+
 curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
 bash
 #source "/root/.bashrc"
@@ -53,19 +68,29 @@ certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-aut
 
 certbot certonly --manual --preferred-challenges=dns --email "$EMAIL" --domain "$DOMAIN"
 
-#create nfs
 #create a script and download config files from repository to be shares via nfs along with certs
 
 ___________________________
 #app host configuration (10.128.0.30, 10.129.0.30, 10.130.0.30) -> use ubuntu with nginx and keycloak
 sudo apt update -y
-sudo apt install nginx default-jdk -y
+sudo apt install nginx openjdk-17-jdk nfs-common -y
+sudo mkdir /mnt/templates
+sudo mount 10.129.0.20:/shared/templates /mnt/templates
+
 wget https://github.com/keycloak/keycloak/releases/download/22.0.5/keycloak-22.0.5.tar.gz
 tar -xzf keycloak-22.0.5.tar.gz
-sudo mkdir /opt/keycloak
-sudo mv keycloak-12.0.4 /opt/keycloak
-sudo useradd --system --shell /sbin/nologin keycloak
-sudo chown -R keycloak: /opt/keycloak
+sudo mv keycloak-22.0.5 /opt/keycloak
+sudo groupadd keycloak
+sudo useradd -g keycloak --system --shell /sbin/nologin keycloak
+sudo chown -R keycloak:keycloak /opt/keycloak
 sudo chmod o+x /opt/keycloak/bin/
 
 #copy from nfs keycloack startup script (env values, create systemd service)
+sudo cp /mnt/templates/codefiles/keycloak.service /etc/systemd/system/keycloak.service
+
+sudo systemctl daemon-reload
+sudo systemctl enable keycloak
+sudo systemctl start keycloak
+
+sudo cp /mnt/templates/codefiles/nginx.conf /etc/nginx/conf.d/keycloak.conf
+sudo systemctl restart nginx
