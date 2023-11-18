@@ -6,6 +6,8 @@ After=network.target
 Type=simple
 User=keycloak
 Group=keycloak
+Environment="KEYCLOAK_ADMIN=admin"
+Environment="KEYCLOAK_ADMIN_PASSWORD=admin"
 ExecStart=/opt/keycloak/bin/kc.sh
   -Djboss.socket.binding.port-offset=100 \
   -Djboss.node.name={{node_name}} \
