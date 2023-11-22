@@ -8,7 +8,7 @@ User=keycloak
 Group=keycloak
 Environment="KEYCLOAK_ADMIN=admin"
 Environment="KEYCLOAK_ADMIN_PASSWORD=admin"
-ExecStart=/opt/keycloak/bin/kc.sh
+ExecStart=/opt/keycloak/bin/kc.sh start
   -Djboss.socket.binding.port-offset=100 \
   -Djboss.node.name={{node_name}} \
   -Djboss.bind.address={{node_ip}} \

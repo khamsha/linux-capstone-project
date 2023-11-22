@@ -51,7 +51,7 @@ EOF
 
 sudo exportfs -r
 
-#Скачиваем репозиторий и добавляем symlink на него в NFS
+#Скачиваем репозиторий и добавляем в NFS
 git clone https://github.com/khamsha/linux-capstone-project.git
 sudo cp -R ~/linux-capstone-project/* /shared/templates/
 sudo chown -R nfsnobody:nfsnobody /shared/templates
@@ -71,7 +71,7 @@ touch authenticate.sh
 cat <<-EOF > authenticate.sh
 #!/bin/bash
 
-yc dns zone add-records --name "familygram" --record "_acme-challenge.tech 300 TXT \$CERTBOT_VALIDATION"
+yc dns zone add-records --name familygram --record "_acme-challenge.tech 300 TXT \$CERTBOT_VALIDATION"
 
 # Sleep to make sure the change has time to propagate over to DNS
 sleep 25
@@ -79,7 +79,7 @@ EOF
 
 chmod +x authenticate.sh
 
-#Запускаем certbot и добавляем symlink на сгенерированные сертификаты в NFS
+#Запускаем certbot для автоматического выпуска сертификатов
 sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh --email "$EMAIL" --domain "$DOMAIN"
 
 #____________________________________________________________________________________________________
@@ -88,13 +88,13 @@ sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manua
 sudo apt update -y
 sudo apt install nginx openjdk-17-jdk nfs-common -y
 
-#Настраиваем NFS клиента
+#Настраиваем NFS клиент
 sudo mkdir /mnt/templates
 sudo mount -t nfs 10.129.0.20:/shared/templates /mnt/templates
 sudo mkdir /mnt/certificates
 sudo mount -t nfs 10.129.0.20:/etc/letsencrypt/live /mnt/certificates
 
-#Устанавливаем Keycloack
+#Устанавливаем Keycloak
 wget https://github.com/keycloak/keycloak/releases/download/22.0.5/keycloak-22.0.5.tar.gz
 tar -xzf keycloak-22.0.5.tar.gz
 sudo mv keycloak-22.0.5 /opt/keycloak
