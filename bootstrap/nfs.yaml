@@ -1,0 +1,54 @@
+#cloud-config
+disable_root: true
+timezone: Europe/Moscow
+repo_update: true
+repo_upgrade: all
+
+users:
+  - name: albert
+    groups: sudo
+    shell: /bin/bash
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDW3NGnecnzaFXt3HLcOPm8o6W1YsE5nYqr9ifFkSyqnEA2+ebOctf3tmgw3H1bvMTAoPl1z29bcC2lyqsXlL7MvKlARQYsBp7Obv+IEJof9T+8+Nlzep5ZzoBmk1B+H68WOTiErA/SE9clTkDlv1WitKrA8NgCP4FzhZ6quqDm7+HlTMylqvQTEtt05LMbQCifqQs/fL0OroO3pnxLEjSB8Eib/AB/My/Kx7JEcD3IWVKvXy3ehKe6zO5IC573i6tOLX0ml8/j9IK4x15kPJ2hINXYpxcfKpyyCJ0L+lHV8lJ9xWHsRdoiXt2QAd1+GHIna3QTuQqsSyfePrUz6vdcMeRuVDGM00mWozKX9UZMLXTwHooVKzNaeiUfYyxSOhhIFeRrPvPZK0L8qyFf+h/LE0DfyJkiLu27Br0PqxqJ1xzxEGsK+auupuX511Bv0o7aQRFrWCQw3pwEkROFUn2BwK+ZpjHyNotmuwiq73nHYgbwLNRog2X0wXmhW5M4V88= albertkhamatshin@MacBook-Pro-ALBERT.local
+
+packages:
+    - dnsutils
+    - net-tools
+
+runcmd:
+    - |
+      sudo yum update -y
+      sudo yum install epel-release -y
+      sudo yum install certbot nfs-utils git -y
+      sudo mkdir -p /shared/templates
+      sudo systemctl enable nfs --now
+      cat << EOF | sudo tee /etc/exports
+      /shared/templates *(rw,sync,root_squash,no_subtree_check)
+      /etc/letsencrypt/live/ *(rw,sync,no_subtree_check,nohide)
+      EOF
+      sudo exportfs -r
+    - |
+      git clone https://github.com/khamsha/linux-capstone-project.git
+      sudo cp -R ~/linux-capstone-project/* /shared/templates/
+      sudo chown -R nfsnobody:nfsnobody /shared/templates
+    - |
+      curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+      sudo cp yandex-cloud/bin/yc /bin/yc
+      sudo yc config profile create dns-profile
+      sudo yc config set cloud-id b1g7io5abmkqch37r715
+      sudo yc config set folder-id b1gulec3r5ftba4hjefj
+      DOMAIN="tech.familygram.ru"
+      EMAIL="akhamatshin@gmail.com"
+    - |
+      touch authenticate.sh
+      cat <<-EOF > authenticate.sh
+      #!/bin/bash
+      yc dns zone add-records --name familygram --record "_acme-challenge.tech 300 TXT \$CERTBOT_VALIDATION"
+      # Sleep to make sure the change has time to propagate over to DNS
+      sleep 25
+      EOF
+      chmod +x authenticate.sh
+    - |
+      sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh \
+      --email "$EMAIL" --domain "$DOMAIN"

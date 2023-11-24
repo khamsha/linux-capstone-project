@@ -1,0 +1,43 @@
+#cloud-config
+disable_root: true
+timezone: Europe/Moscow
+repo_update: true
+repo_upgrade: all
+
+users:
+  - name: albert
+    groups: sudo
+    shell: /bin/bash
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDW3NGnecnzaFXt3HLcOPm8o6W1YsE5nYqr9ifFkSyqnEA2+ebOctf3tmgw3H1bvMTAoPl1z29bcC2lyqsXlL7MvKlARQYsBp7Obv+IEJof9T+8+Nlzep5ZzoBmk1B+H68WOTiErA/SE9clTkDlv1WitKrA8NgCP4FzhZ6quqDm7+HlTMylqvQTEtt05LMbQCifqQs/fL0OroO3pnxLEjSB8Eib/AB/My/Kx7JEcD3IWVKvXy3ehKe6zO5IC573i6tOLX0ml8/j9IK4x15kPJ2hINXYpxcfKpyyCJ0L+lHV8lJ9xWHsRdoiXt2QAd1+GHIna3QTuQqsSyfePrUz6vdcMeRuVDGM00mWozKX9UZMLXTwHooVKzNaeiUfYyxSOhhIFeRrPvPZK0L8qyFf+h/LE0DfyJkiLu27Br0PqxqJ1xzxEGsK+auupuX511Bv0o7aQRFrWCQw3pwEkROFUn2BwK+ZpjHyNotmuwiq73nHYgbwLNRog2X0wXmhW5M4V88= albertkhamatshin@MacBook-Pro-ALBERT.local
+
+packages:
+    - dnsutils
+    - net-tools
+
+runcmd:
+    - sudo apt update -y
+    - sudo apt install nginx openjdk-17-jdk nfs-common -y
+    - |
+      sudo mkdir /mnt/templates
+      sudo mount -t nfs 10.129.0.20:/shared/templates /mnt/templates
+      sudo mkdir /mnt/certificates
+      sudo mount -t nfs 10.129.0.20:/etc/letsencrypt/live /mnt/certificates
+    - |
+      wget https://github.com/keycloak/keycloak/releases/download/22.0.5/keycloak-22.0.5.tar.gz
+      tar -xzf keycloak-22.0.5.tar.gz
+      sudo mv keycloak-22.0.5 /opt/keycloak
+      sudo groupadd keycloak
+      sudo useradd -g keycloak --system --shell /sbin/nologin keycloak
+      sudo chown -R keycloak:keycloak /opt/keycloak
+      sudo chmod o+x /opt/keycloak/bin/
+    - |
+      sudo cp /mnt/templates/keycloak.service /etc/systemd/system/keycloak.service
+      sudo systemctl daemon-reload
+      sudo systemctl enable keycloak
+      sudo systemctl start keycloak
+    - |
+      sudo cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
+      sudo ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
+      sudo systemctl restart nginx
