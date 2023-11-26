@@ -42,11 +42,12 @@ sudo yum install certbot nfs-utils git -y
 
 #Настраиваем NFS сервер
 sudo mkdir -p /shared/templates
+sudo mkdir -p /shared/certificates
 sudo systemctl enable nfs --now
 
 cat << EOF | sudo tee /etc/exports
 /shared/templates *(rw,sync,root_squash,no_subtree_check)
-/etc/letsencrypt/live/ *(rw,sync,no_subtree_check,nohide)
+/shared/certificates *(rw,sync,no_subtree_check,nohide)
 EOF
 
 sudo exportfs -r
@@ -57,8 +58,8 @@ sudo cp -R ~/linux-capstone-project/* /shared/templates/
 sudo chown -R nfsnobody:nfsnobody /shared/templates
 
 #Устанавливаем и настраиваем утилиту yc для автоматизации работы с DNS
-curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
-sudo cp yandex-cloud/bin/yc /bin/yc
+curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i /opt/yc -n
+sudo cp /opt/yc/bin/yc /bin/yc
 sudo yc config profile create dns-profile
 #yc config set service-account-key key.json
 sudo yc config set cloud-id b1g7io5abmkqch37r715
@@ -82,6 +83,9 @@ chmod +x authenticate.sh
 #Запускаем certbot для автоматического выпуска сертификатов
 sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh --email "$EMAIL" --domain "$DOMAIN"
 
+sudo ln -s /etc/letsencrypt/live /shared/certificates
+sudo chown -R nfsnobody:nfsnobody /shared/certificates
+
 #____________________________________________________________________________________________________
 
 #app host configuration (10.128.0.30, 10.129.0.30, 10.130.0.30) -> use ubuntu with nginx and keycloak
@@ -92,7 +96,7 @@ sudo apt install nginx openjdk-17-jdk nfs-common -y
 sudo mkdir /mnt/templates
 sudo mount -t nfs 10.129.0.20:/shared/templates /mnt/templates
 sudo mkdir /mnt/certificates
-sudo mount -t nfs 10.129.0.20:/etc/letsencrypt/live /mnt/certificates
+sudo mount -t nfs 10.129.0.20:/shared/certificates /mnt/certificates
 
 #Устанавливаем Keycloak
 wget https://github.com/keycloak/keycloak/releases/download/22.0.5/keycloak-22.0.5.tar.gz

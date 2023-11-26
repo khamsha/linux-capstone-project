@@ -15,29 +15,26 @@ users:
 packages:
     - dnsutils
     - net-tools
+    - nginx
 
 runcmd:
-    - sudo apt update -y
-    - sudo apt install nginx openjdk-17-jdk nfs-common -y
     - |
-      sudo mkdir /mnt/templates
-      sudo mount -t nfs 10.129.0.20:/shared/templates /mnt/templates
-      sudo mkdir /mnt/certificates
-      sudo mount -t nfs 10.129.0.20:/etc/letsencrypt/live /mnt/certificates
-    - |
+      apt install openjdk-17-jdk nfs-common -y
+      mkdir /mnt/templates
+      mount -t nfs 10.129.0.20:/shared/templates /mnt/templates
+      mkdir /mnt/certificates
+      mount -t nfs 10.129.0.20:/shared/certificates /mnt/certificates
       wget https://github.com/keycloak/keycloak/releases/download/22.0.5/keycloak-22.0.5.tar.gz
       tar -xzf keycloak-22.0.5.tar.gz
-      sudo mv keycloak-22.0.5 /opt/keycloak
-      sudo groupadd keycloak
-      sudo useradd -g keycloak --system --shell /sbin/nologin keycloak
-      sudo chown -R keycloak:keycloak /opt/keycloak
-      sudo chmod o+x /opt/keycloak/bin/
-    - |
-      sudo cp /mnt/templates/keycloak.service /etc/systemd/system/keycloak.service
-      sudo systemctl daemon-reload
-      sudo systemctl enable keycloak
-      sudo systemctl start keycloak
-    - |
-      sudo cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
-      sudo ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
-      sudo systemctl restart nginx
+      mv keycloak-22.0.5 /opt/keycloak
+      groupadd keycloak
+      useradd -g keycloak --system --shell /sbin/nologin keycloak
+      chown -R keycloak:keycloak /opt/keycloak
+      chmod o+x /opt/keycloak/bin/
+      cp /mnt/templates/keycloak.service /etc/systemd/system/keycloak.service
+      systemctl daemon-reload
+      systemctl enable keycloak
+      systemctl start keycloak
+      cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
+      ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
+      systemctl restart nginx

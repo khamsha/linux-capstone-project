@@ -70,6 +70,8 @@ resource "yandex_compute_instance" "nfs" {
   metadata = {
     user-data = "${file("bootstrap/nfs.yaml")}"
   }
+
+  depends_on = [yandex_compute_instance.router]
 }
 
 #################### APP HOST ######################
@@ -87,7 +89,7 @@ resource "yandex_compute_instance" "app" {
 
   boot_disk {
     initialize_params {
-      image_id = "fd811ke2vnjc423tj8ji"
+      image_id = "fd8qe9b3l76lapdh08q6"
     }
   }
 
@@ -100,4 +102,6 @@ resource "yandex_compute_instance" "app" {
   metadata = {
     user-data = "${file("bootstrap/app.yaml")}"
   }
+
+  depends_on = [yandex_compute_instance.nfs]
 }

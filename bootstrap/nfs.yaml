@@ -18,29 +18,26 @@ packages:
 
 runcmd:
     - |
-      sudo yum update -y
-      sudo yum install epel-release -y
-      sudo yum install certbot nfs-utils git -y
-      sudo mkdir -p /shared/templates
-      sudo systemctl enable nfs --now
-      cat << EOF | sudo tee /etc/exports
+      yum install epel-release -y
+      yum install certbot nfs-utils git -y
+      mkdir -p /shared/templates
+      mkdir -p /shared/certificates
+      systemctl enable nfs --now
+      cat << EOF | tee /etc/exports
       /shared/templates *(rw,sync,root_squash,no_subtree_check)
-      /etc/letsencrypt/live/ *(rw,sync,no_subtree_check,nohide)
+      /shared/certificates *(rw,sync,no_subtree_check,nohide)
       EOF
-      sudo exportfs -r
-    - |
+      exportfs -r
       git clone https://github.com/khamsha/linux-capstone-project.git
-      sudo cp -R ~/linux-capstone-project/* /shared/templates/
-      sudo chown -R nfsnobody:nfsnobody /shared/templates
-    - |
-      curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
-      sudo cp yandex-cloud/bin/yc /bin/yc
-      sudo yc config profile create dns-profile
-      sudo yc config set cloud-id b1g7io5abmkqch37r715
-      sudo yc config set folder-id b1gulec3r5ftba4hjefj
+      cp -R linux-capstone-project/* /shared/templates/
+      chown -R nfsnobody:nfsnobody /shared/templates
+      curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i /opt/yc -n
+      cp /opt/yc/bin/yc /bin/yc
+      yc config profile create dns-profile
+      yc config set cloud-id b1g7io5abmkqch37r715
+      yc config set folder-id b1gulec3r5ftba4hjefj
       DOMAIN="tech.familygram.ru"
       EMAIL="akhamatshin@gmail.com"
-    - |
       touch authenticate.sh
       cat <<-EOF > authenticate.sh
       #!/bin/bash
@@ -49,6 +46,7 @@ runcmd:
       sleep 25
       EOF
       chmod +x authenticate.sh
-    - |
       sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh \
       --email "$EMAIL" --domain "$DOMAIN"
+      sudo ln -s /etc/letsencrypt/live /shared/certificates
+      sudo chown -R nfsnobody:nfsnobody /shared/certificates
