@@ -10,19 +10,11 @@ Environment="KEYCLOAK_ADMIN=admin"
 Environment="KEYCLOAK_ADMIN_PASSWORD=admin"
 ExecStart=/opt/keycloak/bin/kc.sh start
   -Djboss.socket.binding.port-offset=100 \
-  -Djboss.node.name={{node_name}} \
-  -Djboss.bind.address={{node_ip}} \
-  -Djboss.bind.address.private={{node_ip}} \
-  -Djboss.jgroups.cluster.password={{cluster_password}} \
-  -Djboss.jgroups.cluster.name={{cluster_name}} \
-  -Djboss.jgroups.discovery.protocol=JDBC_PING \
-  -Djboss.jgroups.discovery.jdbc.driver=org.postgresql.Driver \
-  -Djboss.jgroups.discovery.jdbc.connection_url=jdbc:postgresql://{{postgres_host}}:{{postgres_port}}/{{keycloak_db}} \
-  -Djboss.jgroups.discovery.jdbc.ping_query=SELECT 1 \
-  -Dkeycloak.connectionsJpa.url=jdbc:postgresql://{{postgres_host}}:{{postgres_port}}/{{keycloak_db}} \
-  -Dkeycloak.connectionsJpa.driver=org.postgresql.Driver \
-  -Dkeycloak.connectionsJpa.user={{keycloak_user}} \
-  -Dkeycloak.connectionsJpa.password={{keycloak_password}}
+  -Djboss.node.name=app1 \
+  -Djboss.bind.address.private=10.129.0.30 \
+  -Djgroups.bind_addr=10.129.0.30 \
+  -Djgroups.bind_port=7800 \
+  -Djgroups.tcpping.initial_hosts=10.129.0.30[7800]
 TimeoutStartSec=10
 Restart=on-failure
 
