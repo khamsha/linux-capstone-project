@@ -89,7 +89,7 @@ resource "yandex_compute_instance" "app" {
 
   boot_disk {
     initialize_params {
-      image_id = "fd8qe9b3l76lapdh08q6"
+      image_id = "fd8un8f40qgmlenpa0qb"
     }
   }
 

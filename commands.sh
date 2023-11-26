@@ -104,6 +104,7 @@ tar -xzf keycloak-22.0.5.tar.gz
 sudo mv keycloak-22.0.5 /opt/keycloak
 sudo groupadd keycloak
 sudo useradd -g keycloak --system --shell /sbin/nologin keycloak
+mkdir /opt/keycloak/data
 sudo chown -R keycloak:keycloak /opt/keycloak
 sudo chmod o+x /opt/keycloak/bin/
 

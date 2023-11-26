@@ -14,12 +14,10 @@ users:
 
 packages:
     - dnsutils
-    - net-tools
-    - nginx
 
 runcmd:
     - |
-      apt install openjdk-17-jdk nfs-common -y
+      apt install nginx openjdk-17-jdk nfs-common -y
       mkdir /mnt/templates
       mount -t nfs 10.129.0.20:/shared/templates /mnt/templates
       mkdir /mnt/certificates
@@ -29,6 +27,7 @@ runcmd:
       mv keycloak-22.0.5 /opt/keycloak
       groupadd keycloak
       useradd -g keycloak --system --shell /sbin/nologin keycloak
+      mkdir /opt/keycloak/data
       chown -R keycloak:keycloak /opt/keycloak
       chmod o+x /opt/keycloak/bin/
       cp /mnt/templates/keycloak.service /etc/systemd/system/keycloak.service

@@ -3,12 +3,13 @@ Description=Keycloak
 After=network.target
 
 [Service]
+WorkingDirectory=/opt/keycloak
 Type=simple
 User=keycloak
 Group=keycloak
 Environment="KEYCLOAK_ADMIN=admin"
 Environment="KEYCLOAK_ADMIN_PASSWORD=admin"
-ExecStart=/opt/keycloak/bin/kc.sh start
+ExecStart=/opt/keycloak/bin/kc.sh start-dev
   -Djboss.socket.binding.port-offset=100 \
   -Djboss.node.name=app1 \
   -Djboss.bind.address.private=10.129.0.30 \
