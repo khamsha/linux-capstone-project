@@ -65,7 +65,7 @@ sudo yc config profile create dns-profile
 #yc config set service-account-key key.json
 sudo yc config set cloud-id b1g7io5abmkqch37r715
 sudo yc config set folder-id b1gulec3r5ftba4hjefj #to change
-DOMAIN="tech.familygram.ru" #to change
+DOMAIN="keycloak.xn--d1ac1adgdk.xn--p1ai" #to change
 EMAIL="akhamatshin@gmail.com"
 
 #Готоваим аутентификационный скрипт, чтобы автоматически пройти проверку от Certbot
@@ -73,7 +73,7 @@ touch authenticate.sh
 cat <<-EOF > authenticate.sh
 #!/bin/bash
 
-yc dns zone add-records --name familygram --record "_acme-challenge.tech 300 TXT \$CERTBOT_VALIDATION"
+yc dns zone add-records --name desport-rf-zone --record "_acme-challenge.keycloak 300 TXT \$CERTBOT_VALIDATION"
 
 # Sleep to make sure the change has time to propagate over to DNS
 sleep 25
@@ -84,11 +84,8 @@ chmod +x authenticate.sh
 #Запускаем certbot для автоматического выпуска сертификатов
 sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh --email "$EMAIL" --domain "$DOMAIN"
 
-groupadd www-data
-useradd -g www-data --system --shell /sbin/nologin www-data
-chown -R www-data:www-data /etc/letsencrypt/
-cp -R /etc/letsencrypt/* /shared/certificates/
-
+chmod -R 755 /etc/letsencrypt/archive
+cp -R /etc/letsencrypt/archive /shared/certificates/
 sudo chown -R nfsnobody:nfsnobody /shared/certificates
 
 #____________________________________________________________________________________________________
@@ -110,6 +107,8 @@ sudo mv keycloak-22.0.5 /opt/keycloak
 sudo groupadd keycloak
 sudo useradd -g keycloak --system --shell /sbin/nologin keycloak
 mkdir /opt/keycloak/data
+mkdir /opt/keycloak/log
+touch /opt/keycloak/log/server.log
 sudo chown -R keycloak:keycloak /opt/keycloak
 sudo chmod o+x /opt/keycloak/bin/
 
@@ -123,5 +122,8 @@ sudo systemctl start keycloak
 sudo cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
 sudo ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
 mkdir /etc/letsencrypt/
-cp -R /mnt/certificates/live/ /etc/letsencrypt/
+cp -R /mnt/certificates/archive/ /etc/letsencrypt/
 sudo systemctl restart nginx
+
+#______________________________________________________________________________________________
+#observability host (10.129.0.40)

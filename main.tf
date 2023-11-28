@@ -105,3 +105,35 @@ resource "yandex_compute_instance" "app" {
 
   depends_on = [yandex_compute_instance.nfs]
 }
+
+#################### OBSERVABILITY HOST ######################
+
+resource "yandex_compute_instance" "observability" {
+  name               = "observability"
+  platform_id        = "standard-v1"
+  zone               = "ru-central1-b"
+  hostname           = "observability"
+
+  resources {
+    cores  = 2
+    memory = 4
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = "fd811ke2vnjc423tj8ji"
+    }
+  }
+
+  network_interface {
+    subnet_id      = "e2lrfl2ekcmg2j4mtqsu"
+    ip_address     = "10.129.0.40"
+    nat            = false
+  }
+
+  metadata = {
+    user-data = "${file("bootstrap/observability.yaml")}"
+  }
+
+  depends_on = [yandex_compute_instance.router]
+}

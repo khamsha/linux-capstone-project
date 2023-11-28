@@ -29,6 +29,8 @@ runcmd:
       groupadd keycloak
       useradd -g keycloak --system --shell /sbin/nologin keycloak
       mkdir /opt/keycloak/data
+      mkdir /opt/keycloak/log
+      touch /opt/keycloak/log/server.log
       chown -R keycloak:keycloak /opt/keycloak
       chmod o+x /opt/keycloak/bin/
       cp /mnt/templates/keycloak.service /etc/systemd/system/keycloak.service
@@ -37,4 +39,6 @@ runcmd:
       systemctl start keycloak
       cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
       ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
+      mkdir /etc/letsencrypt/
+      cp -R /mnt/certificates/archive/ /etc/letsencrypt/
       systemctl restart nginx

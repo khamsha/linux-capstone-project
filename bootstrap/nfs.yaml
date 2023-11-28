@@ -34,18 +34,18 @@ runcmd:
       yc config profile create dns-profile
       yc config set cloud-id b1g7io5abmkqch37r715
       yc config set folder-id b1g7qubslbdu3l6mk1fs
-      DOMAIN="tech.xn--d1ac1adgdk.xn--p1ai"
+      DOMAIN="keycloak.xn--d1ac1adgdk.xn--p1ai"
       EMAIL="akhamatshin@gmail.com"
       touch authenticate.sh
       cat <<-EOF > authenticate.sh
       #!/bin/bash
-      yc dns zone add-records --name desport-rf-zone --record "_acme-challenge.tech 300 TXT \$CERTBOT_VALIDATION"
+      yc dns zone add-records --name desport-rf-zone --record "_acme-challenge.keycloak 300 TXT \$CERTBOT_VALIDATION"
       # Sleep to make sure the change has time to propagate over to DNS
       sleep 25
       EOF
       chmod +x authenticate.sh
       sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh \
       --email "$EMAIL" --domain "$DOMAIN"
-      chmod -R 755 /etc/letsencrypt/
-      sudo ln -s /etc/letsencrypt/live /shared/certificates
+      chmod -R 755 /etc/letsencrypt/archive
+      cp -R /etc/letsencrypt/archive /shared/certificates/
       sudo chown -R nfsnobody:nfsnobody /shared/certificates

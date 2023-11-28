@@ -9,13 +9,17 @@ User=keycloak
 Group=keycloak
 Environment="KEYCLOAK_ADMIN=admin"
 Environment="KEYCLOAK_ADMIN_PASSWORD=admin"
-ExecStart=/opt/keycloak/bin/kc.sh start-dev
+ExecStart=/opt/keycloak/bin/kc.sh start-dev \
   -Djboss.socket.binding.port-offset=100 \
   -Djboss.node.name=app1 \
   -Djboss.bind.address.private=10.129.0.30 \
   -Djgroups.bind_addr=10.129.0.30 \
   -Djgroups.bind_port=7800 \
-  -Djgroups.tcpping.initial_hosts=10.129.0.30[7800]
+  -Djgroups.tcpping.initial_hosts=10.129.0.30[7800] \
+  --proxy edge \
+  --hostname-strict=false \
+  --hostname=auth.mydomain.com \
+  >> /opt/keycloak/log/server.log
 TimeoutStartSec=10
 Restart=on-failure
 
