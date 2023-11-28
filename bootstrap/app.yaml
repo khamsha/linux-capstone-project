@@ -17,6 +17,7 @@ packages:
 
 runcmd:
     - |
+      apt update -y
       apt install nginx openjdk-17-jdk nfs-common -y
       mkdir /mnt/templates
       mount -t nfs 10.129.0.20:/shared/templates /mnt/templates
@@ -36,4 +37,6 @@ runcmd:
       systemctl start keycloak
       cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
       ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
+      mkdir /etc/letsencrypt/
+      cp -R /mnt/certificates/live/ /etc/letsencrypt/
       systemctl restart nginx

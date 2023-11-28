@@ -38,7 +38,7 @@ echo "iptables-restore < /etc/iptables.rules" | sudo tee -a /etc/rc.local
 
 sudo yum update -y
 sudo yum install epel-release -y
-sudo yum install certbot nfs-utils git -y
+sudo yum install certbot git -y
 
 #Настраиваем NFS сервер
 sudo mkdir -p /shared/templates
@@ -47,7 +47,7 @@ sudo systemctl enable nfs --now
 
 cat << EOF | sudo tee /etc/exports
 /shared/templates *(rw,sync,root_squash,no_subtree_check)
-/shared/certificates *(rw,sync,no_subtree_check,nohide)
+/shared/certificates *(rw,sync,root_squash,no_subtree_check)
 EOF
 
 sudo exportfs -r
@@ -58,6 +58,7 @@ sudo cp -R ~/linux-capstone-project/* /shared/templates/
 sudo chown -R nfsnobody:nfsnobody /shared/templates
 
 #Устанавливаем и настраиваем утилиту yc для автоматизации работы с DNS
+mkdir /opt/yc
 curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i /opt/yc -n
 sudo cp /opt/yc/bin/yc /bin/yc
 sudo yc config profile create dns-profile
@@ -83,7 +84,11 @@ chmod +x authenticate.sh
 #Запускаем certbot для автоматического выпуска сертификатов
 sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh --email "$EMAIL" --domain "$DOMAIN"
 
-sudo ln -s /etc/letsencrypt/live /shared/certificates
+groupadd www-data
+useradd -g www-data --system --shell /sbin/nologin www-data
+chown -R www-data:www-data /etc/letsencrypt/
+cp -R /etc/letsencrypt/* /shared/certificates/
+
 sudo chown -R nfsnobody:nfsnobody /shared/certificates
 
 #____________________________________________________________________________________________________
@@ -117,4 +122,6 @@ sudo systemctl start keycloak
 #Настраиваем nginx
 sudo cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
 sudo ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
+mkdir /etc/letsencrypt/
+cp -R /mnt/certificates/live/ /etc/letsencrypt/
 sudo systemctl restart nginx
