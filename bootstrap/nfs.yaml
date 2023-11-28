@@ -21,7 +21,7 @@ runcmd:
       systemctl enable nfs --now
       cat << EOF | tee /etc/exports
       /shared/templates *(rw,sync,root_squash,no_subtree_check)
-      /shared/certificates *(rw,sync,noresvport,root_squash,no_subtree_check)
+      /shared/certificates *(rw,sync,root_squash,no_subtree_check)
       EOF
       exportfs -r
       export HOME=/root
@@ -46,5 +46,6 @@ runcmd:
       chmod +x authenticate.sh
       sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh \
       --email "$EMAIL" --domain "$DOMAIN"
-      cp -R /etc/letsencrypt/live/ /shared/certificates/
+      chmod -R 755 /etc/letsencrypt/
+      sudo ln -s /etc/letsencrypt/live /shared/certificates
       sudo chown -R nfsnobody:nfsnobody /shared/certificates

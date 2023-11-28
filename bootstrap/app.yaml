@@ -37,6 +37,4 @@ runcmd:
       systemctl start keycloak
       cp /mnt/templates/nginx.conf /etc/nginx/sites-available/keycloak
       ln -s /etc/nginx/sites-available/keycloak /etc/nginx/sites-enabled/
-      mkdir /etc/letsencrypt/
-      cp -R /mnt/certificates/live/ /etc/letsencrypt/
       systemctl restart nginx
