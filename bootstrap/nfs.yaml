@@ -21,7 +21,7 @@ runcmd:
       systemctl enable nfs --now
       cat << EOF | tee /etc/exports
       /shared/templates *(rw,sync,root_squash,no_subtree_check)
-      /shared/certificates *(rw,sync,root_squash,no_subtree_check)
+      /shared/certificates *(rw,sync,noresvport,root_squash,no_subtree_check)
       EOF
       exportfs -r
       export HOME=/root
@@ -33,21 +33,18 @@ runcmd:
       cp /opt/yc/bin/yc /bin/yc
       yc config profile create dns-profile
       yc config set cloud-id b1g7io5abmkqch37r715
-      yc config set folder-id b1gulec3r5ftba4hjefj
-      DOMAIN="tech.familygram.ru"
+      yc config set folder-id b1g7qubslbdu3l6mk1fs
+      DOMAIN="tech.xn--d1ac1adgdk.xn--p1ai"
       EMAIL="akhamatshin@gmail.com"
       touch authenticate.sh
       cat <<-EOF > authenticate.sh
       #!/bin/bash
-      yc dns zone add-records --name familygram --record "_acme-challenge.tech 300 TXT \$CERTBOT_VALIDATION"
+      yc dns zone add-records --name desport-rf-zone --record "_acme-challenge.tech 300 TXT \$CERTBOT_VALIDATION"
       # Sleep to make sure the change has time to propagate over to DNS
       sleep 25
       EOF
       chmod +x authenticate.sh
       sudo certbot certonly --manual -n --preferred-challenges=dns --agree-tos --manual-auth-hook ./authenticate.sh \
       --email "$EMAIL" --domain "$DOMAIN"
-      groupadd www-data
-      useradd -g www-data --system --shell /sbin/nologin www-data
-      chown -R www-data:www-data /etc/letsencrypt/
-      cp -R /etc/letsencrypt/* /shared/certificates/
+      cp -R /etc/letsencrypt/live/ /shared/certificates/
       sudo chown -R nfsnobody:nfsnobody /shared/certificates
