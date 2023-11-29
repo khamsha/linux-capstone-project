@@ -18,7 +18,8 @@ ExecStart=/opt/keycloak/bin/kc.sh start-dev \
   -Djgroups.tcpping.initial_hosts=10.129.0.30[7800] \
   --proxy edge \
   --hostname-strict=false \
-  --hostname=auth.mydomain.com \
+  --hostname=keycloak.xn--d1ac1adgdk.xn--p1ai \
+  --hostname-strict-backchannel=true
   >> /opt/keycloak/log/server.log
 TimeoutStartSec=10
 Restart=on-failure
